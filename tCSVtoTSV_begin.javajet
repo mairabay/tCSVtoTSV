@@ -1,0 +1,78 @@
+<%@ jet 
+	imports="
+		org.talend.core.model.process.INode 
+		org.talend.core.model.process.ElementParameterParser 
+		org.talend.core.model.metadata.IMetadataTable 
+		org.talend.core.model.metadata.IMetadataColumn 
+		org.talend.core.model.process.IConnection
+		org.talend.core.model.process.IConnectionCategory
+		org.talend.designer.codegen.config.CodeGeneratorArgument
+		org.talend.core.model.metadata.types.JavaTypesManager
+		org.talend.core.model.metadata.types.JavaType
+		java.util.List 
+    	java.util.Map		
+	" 
+%>
+
+
+<% 
+    CodeGeneratorArgument codeGenArgument = (CodeGeneratorArgument) argument;
+    INode node = (INode)codeGenArgument.getArgument();
+    String cid = node.getUniqueName();
+    
+    String inFileName = ElementParameterParser.getValue(node, "__FILEINPUT__");
+    String outFileName = ElementParameterParser.getValue(node, "__FILEOUTPUT__");
+    
+    String sEncoding = ElementParameterParser.getValue(node, "__ENCODING__");
+    	
+%>
+
+if (<%=outFileName%>.equals(<%=inFileName%>)){
+  String error_msg_<%=cid%> = "Input file cannot have the same name as output file";
+  throw new RuntimeException (error_msg_<%=cid%>);
+}
+
+String sOutFileN_<%=cid%> = <%=outFileName%>;
+String sOriFileN_<%=cid%> = <%=inFileName%>;
+
+java.io.File outFile_<%=cid%> = new java.io.File(sOutFileN_<%=cid%>);
+
+final java.io.BufferedWriter out<%=cid%> = new java.io.BufferedWriter(
+  new java.io.OutputStreamWriter(
+    new java.io.FileOutputStream(sOutFileN_<%=cid%>, false), <%=sEncoding%>
+));
+
+java.io.BufferedReader in_<%=cid%> = new java.io.BufferedReader(
+  new java.io.InputStreamReader(
+    new java.io.FileInputStream(sOriFileN_<%=cid%>), <%=sEncoding%>
+));
+
+//8192: the default buffer size of BufferedReader
+char[] cbuf_<%=cid%> = new char[8192];  
+int readSize_<%=cid%> = 0;
+char currentChar_<%=cid%>;
+
+while ((readSize_<%=cid%> = in_<%=cid%>.read(cbuf_<%=cid%>)) != -1) {
+
+  for (int i_<%=cid%> = 0; i_<%=cid%> < cbuf_<%=cid%>.length; i_<%=cid%>++){
+  
+  	currentChar_<%=cid%> = cbuf_<%=cid%>[i_<%=cid%>];
+  	  	
+    if( currentChar_<%=cid%> == '\t'){
+    	cbuf_<%=cid%>[i_<%=cid%>] = ' ';
+    }else if(currentChar_<%=cid%> == ','){
+    	cbuf_<%=cid%>[i_<%=cid%>] = '\t';
+    }
+  }
+  
+  out<%=cid%>.write(cbuf_<%=cid%>, 0, readSize_<%=cid%>);
+  
+}
+out<%=cid%>.flush();
+out<%=cid%>.close();
+in_<%=cid%>.close();
+
+globalMap.put("<%=cid%>_ISEND", true);
+
+
+
